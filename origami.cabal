@@ -6,8 +6,8 @@ License:                BSD3
 License-File:           LICENSE
 Copyright:		(c) 2015 Eric Nedervold
 Stability:              alpha
--- Homepage:               http://github.com/nedervold/origami
--- Bug-Reports:            http://github.com/nedervold/origami
+Homepage:               http://github.com/nedervold/origami
+Bug-Reports:            http://github.com/nedervold/origami/issues
 -- Tested-With:            Haskell Platform 2014.2.0.0 for Mac OS X
 Synopsis:               A framework for transforming heterogenous data 
 			through folds
