@@ -1,0 +1,82 @@
+Name:                   origami
+Version:                0.0.1
+Author:                 Eric Nedervold<nedervoldsoftware@gmail.com>
+Maintainer:             Eric Nedervold<nedervoldsoftware@gmail.com>
+License:                BSD3
+License-File:           LICENSE
+Copyright:		(c) 2015 Eric Nedervold
+Stability:              alpha
+-- Homepage:               http://github.com/nedervold/origami
+-- Bug-Reports:            http://github.com/nedervold/origami
+-- Tested-With:            Haskell Platform 2014.2.0.0 for Mac OS X
+Synopsis:               A framework for transforming heterogenous data 
+			through folds
+Category:		Data
+Description:
+
+    This package provides a framework for transforming heterogenous
+    data in a typed manner using folds and provides Template Haskell
+    macros for automatically producing the necessary boilerplate.
+    .
+    Given a set of datatypes, we generate a record declaration called
+    @Fold@, parameterized over one type variable for each datatype.
+    For each constructor @Xxx@ used by any of these types, a field
+    @mkXxx@ is generated.  (A few utility @Fold@ values are
+    additionally defined.)
+    .
+    For each datatype @Yyy@, we also generate a @foldYyy@ function
+    that applies a @Fold@ to its @Yyy@ argument, resulting in a @yyy@
+    value.  Conceptually, any constructor @Xxx@ in the argument or any
+    of its sub-components is recursively replaced bottom-up by an
+    application of @mkXxx@.
+    .
+    The set of datatypes, the /fold family/, is specified by giving a
+    list of /root/ datatypes. Datatypes may be designated as /atomic:/
+    they will not be recursed into.
+    .
+    In general, the framework does not handle parameterized datatypes,
+    but applications of 'Traversable', 'Bitraversable', or
+    'Tritraversable' can be handled, if declared by the user.  The
+    /n/-ary functors are treated as "transparent" and traversed
+    through.
+    .
+    See the website for more information and examples.
+
+Cabal-Version:          >= 1.10
+Build-Type:             Simple
+
+Library
+  Default-Language:     Haskell2010
+  HS-Source-Dirs:       src
+  GHC-Options:          -Wall
+  Exposed-Modules:      Data.Origami
+                      , Data.Origami.Internal.Build
+                      , Data.Origami.Internal.Fold
+                      , Data.Origami.Internal.FoldFamily
+                      , Data.Origami.Internal.TH
+                      , Data.Origami.Internal.Trifunctor
+  Other-Modules:        Data.Origami.Internal.Pretty
+                      , Data.Origami.Internal.THUtils
+  Build-Depends:        base >= 4 && < 5
+                      , bifunctors ==4.2.*
+                      , containers ==0.5.*
+                      , lens ==4.7.*
+                      , mtl ==2.1.*
+                      , pretty ==1.1.*
+                      , template-haskell
+
+Test-Suite test
+  Type:                 exitcode-stdio-1.0
+  Default-Language:     Haskell2010
+  Hs-Source-Dirs:       tests
+  Ghc-Options:          -Wall -Werror
+  Main-Is:              Test.hs
+  Build-Depends:        base >=4 && < 5
+                      , origami
+                      , HUnit ==1.2.*
+                      , test-framework ==0.8.*
+                      , test-framework-hunit ==0.3.*
+
+Source-Repository head
+  Type:                 git
+  Location:             git://github.com/nedervold/origami.git
