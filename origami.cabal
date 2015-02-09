@@ -9,36 +9,34 @@ Stability:              alpha
 Homepage:               http://github.com/nedervold/origami
 Bug-Reports:            http://github.com/nedervold/origami/issues
 -- Tested-With:            Haskell Platform 2014.2.0.0 for Mac OS X
-Synopsis:               A framework for transforming heterogenous data 
-			through folds
+Synopsis:               An un-SYB framework for transforming heterogenous
+			data through folds
 Category:		Data
 Description:
 
-    This package provides a framework for transforming heterogenous
-    data in a typed manner using folds and provides Template Haskell
-    macros for automatically producing the necessary boilerplate.
+    The Origami package consists of a coding pattern for transforming
+    heterogenously typed data and Template Haskell macros to support
+    the pattern.  It operates in the same problem space as SYB, but
+    generates the boilerplate for the user.
     .
-    Given a set of datatypes, we generate a record declaration called
-    @Fold@, parameterized over one type variable for each datatype.
-    For each constructor @Xxx@ used by any of these types, a field
-    @mkXxx@ is generated.  (A few utility @Fold@ values are
-    additionally defined.)
+    In the pattern, we focus on a specific set of types, the /fold/
+    /family/.  For each constructor of each of those types, the user
+    will define a function to "replace" the constructor when folding.
     .
-    For each datatype @Yyy@, we also generate a @foldYyy@ function
-    that applies a @Fold@ to its @Yyy@ argument, resulting in a @yyy@
-    value.  Conceptually, any constructor @Xxx@ in the argument or any
-    of its sub-components is recursively replaced bottom-up by an
-    application of @mkXxx@.
+    These functions are collected together into a single record.  (Its
+    declaration is generated for the user.)  Collecting the functions
+    together forces the typing of all the functions to remain
+    consistent and facilitates code reuse.
     .
-    The set of datatypes, the /fold family/, is specified by giving a
-    list of /root/ datatypes. Datatypes may be designated as /atomic:/
-    they will not be recursed into.
+    For each datatype, a fold function is automatically generated that
+    applies the fold record to values of that datatype.  It decomposes
+    the value into parts according to its constructor, recursively
+    applies the fold to the parts, then puts them back together using
+    the replacement constructor function from the record.
     .
-    In general, the framework does not handle parameterized datatypes,
-    but applications of 'Traversable', 'Bitraversable', or
-    'Tritraversable' can be handled, if declared by the user.  The
-    /n/-ary functors are treated as "transparent" and traversed
-    through.
+    As with SYB, Origami lets the user think on a higher-level of
+    abstraction about data transformation and relieves her from the
+    need to write boilerplate.
     .
     See the website for more information and examples.
 

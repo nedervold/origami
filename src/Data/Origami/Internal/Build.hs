@@ -43,53 +43,62 @@ buildFoldsDryRun rts functs atoms = do
 	print $ ppr $ mkFoldDecs ff
     return []
 
--- | First discovers the fold family by starting at the root datatypes
--- and including their components' datatypes recursively, then builds
--- declarations from it to be spliced into the source file.
+-- | Discovers the fold family and builds declarations from it to be
+-- spliced into a source file.
 --
--- Datatypes declared as atomic will not be recursed into and will not
--- become part of the fold family.
+-- The fold family includes the root datatypes and the datatypes of
+-- all of their components, recursively.  Datatypes declared as atomic
+-- will not be included, nor their components.
 --
 -- In general, the framework does not currently handle parameterized
--- types, but applications of 'Traversable', 'Bitraversable', or
--- 'Tritraversable' can be handled, if the user declares them.	The
--- /n/-ary functors are treated as "transparent" and traversed
--- through. (You are not expected to understand this explanation: take
--- a look at the type signatures in the Haddock of the generated
--- code.)
+-- datatypes, but applications of datatypes in 'Traversable',
+-- 'Bitraversable', or 'Tritraversable' are treated as "transparent"
+-- and traversed through.
 --
--- The framework:
+-- The framework generates:
 --
--- * Generates a parameterized @Fold@ record; each parameter @xxx@
--- corresponds to a non-atomic datatype @Xxx@ in the fold family.
--- Each field @mkYyy@ of the @Fold@ corresponds to a constructor @Yyy@
--- used by some datatype in the fold family.
+-- * a type-parameterized @Fold@ record datatype.  Each type parameter
+-- @xxx@ corresponds to a non-atomic datatype @Xxx@ in the fold
+-- family.  Each field @mkYyy@ of the @Fold@ corresponds to a
+-- constructor @Yyy@ used by some datatype in the fold family.
 --
--- * Generates an @idFold@ record; folding over @idFold@ is equivalent
--- to applying @id@: it does nothing.  @idFold@ is useful as a base
+-- * an @idFold@ record.  Folding over @idFold@ is equivalent to
+-- applying @id@: it does nothing.  @idFold@ is useful as a base
 -- record to build your own folds upon.
 --
--- * Generates an @errFold@ function to create a tagged @Fold@ record,
--- with undefined fields that give a useful error message when
--- accessed.  @mkXxx (errFold "example")@ is defined as @error
+-- * an @errFold@ function to create a @Fold@ record, with undefined
+-- fields that give a useful error message when accessed.  The @mkXxx@
+-- field of @errFold "example"@ is defined to contain @error
 -- "example.mkXxx"@.
 --
--- * Generates a @monadicFold@ function that transforms a @Fold@ into
--- one that applies the base fold monadically in a bottom-up,
--- left-to-right way.  (Again, see the Haddocks of the generated code.)
+-- * a @monadicFold@ function that lifts a @Fold a b c@ into a @Fold
+-- (m a) (m b) (m c)@.  It applies the base fold monadically in a
+-- bottom-up, left-to-right way.
 --
--- * For each datatype @Xxx@, generates a @foldXxx@ function that
--- applies a @Fold@ to an @Xxx@ value, returning a value of type
--- @xxx@.
+-- * for each datatype @Xxx@, a @foldXxx@ function that applies a
+-- @Fold@ to an @Xxx@ value, returning a value of type @xxx@.
 --
 -- The names @Fold@, @idFold@, @errFold@, and @monadicFold@ are fixed.
 -- They are intended to be imported qualified.
 --
--- There are other restrictions not mentioned here: if you hit any of
--- them, the framework should output a helpful, intelligible error
--- message when /generating/ the declarations /before/ trying to splice
--- and compile declarations.  You should see no errors from the
--- compiler trying to compile bad generated code.
+-- You are not expected to understand the structure of the generated
+-- code from this generic description.  Generate code for your
+-- specific case and look at its Haddock documentation.
+--
+-- Since the discovery process can automatically collect a very large
+-- number of datatypes, and since the user doesn't usually see the
+-- spliced code, we require the user to declare what she expects so
+-- that there are no surprises.  For that reason, any functor classes
+-- expected to be appear in the result must be declared, as are
+-- datatypes the user wants to treat as atomic.
+--
+-- There are a few other restrictions not mentioned here: if you hit
+-- any of them, the framework should output a helpful, intelligible
+-- error message when generating the declarations and before trying to
+-- splice and compile the declarations.  You should see no errors from
+-- the compiler trying to compile bad generated code.  If you do,
+-- that's a bug; please let us know.  If the error messages are
+-- opaque, that's a bug too.
 
 buildFolds :: [Name]	-- ^ names of the root datatypes
 	   -> [Name]	-- ^ names of the /n/-ary functor classes to be used
