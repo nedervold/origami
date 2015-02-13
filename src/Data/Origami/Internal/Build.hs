@@ -47,7 +47,7 @@ buildFoldsDryRun rts functs atoms = do
 -- spliced into a source file.
 --
 -- The fold family includes the root datatypes and the datatypes of
--- all of their components, recursively.  Datatypes declared as atomic
+-- all of their components, recursively. Datatypes declared as atomic
 -- will not be included, nor their components.
 --
 -- In general, the framework does not currently handle parameterized
@@ -57,22 +57,22 @@ buildFoldsDryRun rts functs atoms = do
 --
 -- The framework generates:
 --
--- * a type-parameterized @Fold@ record datatype.  Each type parameter
+-- * a type-parameterized @Fold@ record datatype. Each type parameter
 -- @xxx@ corresponds to a non-atomic datatype @Xxx@ in the fold
--- family.  Each field @mkYyy@ of the @Fold@ corresponds to a
+-- family. Each field @mkYyy@ of the @Fold@ corresponds to a
 -- constructor @Yyy@ used by some datatype in the fold family.
 --
--- * an @idFold@ record.  Folding over @idFold@ is equivalent to
--- applying @id@: it does nothing.  @idFold@ is useful as a base
--- record to build your own folds upon.
+-- * an @idFold@ record. Folding over @idFold@ is equivalent to
+-- applying @id@: it does nothing. @idFold@ is useful as a base record
+-- to build your own folds upon.
 --
 -- * an @errFold@ function to create a @Fold@ record, with undefined
--- fields that give a useful error message when accessed.  The @mkXxx@
+-- fields that give a useful error message when accessed. The @mkXxx@
 -- field of @errFold "example"@ is defined to contain @error
 -- "example.mkXxx"@.
 --
 -- * a @monadicFold@ function that lifts a @Fold a b c@ into a @Fold
--- (m a) (m b) (m c)@.  It applies the base fold monadically in a
+-- (m a) (m b) (m c)@. It applies the base fold monadically in a
 -- bottom-up, left-to-right way.
 --
 -- * for each datatype @Xxx@, a @foldXxx@ function that applies a
@@ -82,23 +82,23 @@ buildFoldsDryRun rts functs atoms = do
 -- They are intended to be imported qualified.
 --
 -- You are not expected to understand the structure of the generated
--- code from this generic description.  Generate code for your
--- specific case and look at its Haddock documentation.
+-- code from this generic description. Generate code for your specific
+-- case and look at its Haddock documentation.
 --
 -- Since the discovery process can automatically collect a very large
 -- number of datatypes, and since the user doesn't usually see the
 -- spliced code, we require the user to declare what she expects so
--- that there are no surprises.  For that reason, any functor classes
+-- that there are no surprises.	 For that reason, any functor classes
 -- expected to be appear in the result must be declared, as are
 -- datatypes the user wants to treat as atomic.
 --
 -- There are a few other restrictions not mentioned here: if you hit
 -- any of them, the framework should output a helpful, intelligible
 -- error message when generating the declarations and before trying to
--- splice and compile the declarations.  You should see no errors from
--- the compiler trying to compile bad generated code.  If you do,
--- that's a bug; please let us know.  If the error messages are
--- opaque, that's a bug too.
+-- splice and compile the declarations. You should see no errors from
+-- the compiler trying to compile bad generated code. If you do,
+-- that's a bug; please let us know. If the error messages are opaque,
+-- that's a bug too.
 
 buildFolds :: [Name]	-- ^ names of the root datatypes
 	   -> [Name]	-- ^ names of the /n/-ary functor classes to be used
@@ -189,13 +189,15 @@ buildFoldFamilyMB rts functs atoms = do
 	NewtypeD _ nm' [] con _
 	    -> getDataCasesFromDataD nm' [con]
 	NewtypeD {} -> throwErrWithStack $ ErrParamType (pretty dec)
-	TySynD _ [] ty
-	    -> case unAppTs ty of
+	TySynD nm' [] ty
+	    -> withStackTop nm' $ case unAppTs ty of
 		  [ConT _nm] -> throwErrWithStack $ ErrUnimpl $ concat [
 		      "getDataCasesFromDec ", pretty nm, " ", pretty dec]
 		  _ -> throwErrWithStack $ ErrParamType (pretty dec)
-	TySynD {}
-	    -> throwErrWithStack $ ErrParamTypeSyn (pretty dec)
+	TySynD nm' _ _
+	    -> withStackTop nm'
+		   $ throwErrWithStack
+		       $ ErrParamTypeSyn (pretty dec)
 	_ -> throwErrWithStack $ ErrReify' nm (pretty dec)
 
     -- | Gets a list of 'DataCase's from a 'DataD' (or equivalently, a
@@ -240,8 +242,10 @@ buildFoldFamilyMB rts functs atoms = do
 		    DataD {} -> throwErrWithStack $ ErrParamType (pretty dec)
 		    NewtypeD {}
 			-> throwErrWithStack $ ErrParamType (pretty dec)
-		    TySynD {}
-			-> throwErrWithStack $ ErrParamTypeSyn (pretty dec)
+		    TySynD nm _ _
+			-> withStackTop nm
+			       $ throwErrWithStack
+				   $ ErrParamTypeSyn (pretty dec)
 		    _ -> throwErrWithStack $ ErrReify' nm' (pretty dec)
 		_ -> throwErrWithStack $ ErrReify nm' info
 	_ -> throwErrWithStack
@@ -290,9 +294,11 @@ buildFoldFamilyMB rts functs atoms = do
 	info <- reifyTypeName nm'
 	case info of
 	    TyConI dec -> case dec of
-		TySynD _nm tvbs t -> if null tvbs
+		TySynD nm tvbs t -> if null tvbs
 		    then return $ Just t
-		    else throwErrWithStack $ ErrParamTypeSyn (pretty dec)
+		    else withStackTop nm
+			     $ throwErrWithStack
+				 $ ErrParamTypeSyn (pretty dec)
 		_ -> return Nothing
 
 	    -- TODO Or should this be an error?
@@ -465,7 +471,7 @@ instance Show BuildErr where
 -- | Prepends the stack trace
 showStk :: Stack -> String -> String
 showStk stk msg = concat ["Error while processing ",
-			  intercalate " => " $ map (show . pretty) stk,
+			  intercalate " <= " $ map (show . pretty) stk,
 			  ":\n",
 			  msg]
 
@@ -487,7 +493,7 @@ processData data' = do
     let dupCtors = duplicateCtorNames ff
 
 	-- TODO A better error would tell you both the types and the
-	-- ctors.
+        -- ctors.
 
     unless (S.null dupCtors) $ Left $ ErrDupCtors dupCtors
 
