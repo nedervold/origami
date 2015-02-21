@@ -69,6 +69,15 @@ Test-Suite test
   Hs-Source-Dirs:       tests
   Ghc-Options:          -Wall -Werror
   Main-Is:              Test.hs
+  Other-Modules:	Data.OrigamiTests
+                      , Data.Origami.Internal.BuildTests
+                      , Data.Origami.Internal.TestFiles.Bar
+                      , Data.Origami.Internal.TestFiles.Baz
+                      , Data.Origami.Internal.TestFiles.Empty
+                      , Data.Origami.Internal.TestFiles.Foo
+                      , Data.Origami.Internal.TestFiles.Infix
+                      , Data.Origami.Internal.TestFiles.Param
+                      , Data.Origami.Internal.TestFiles.Qual
   Build-Depends:        base >=4 && < 5
                       , origami
                       , HUnit ==1.2.*
