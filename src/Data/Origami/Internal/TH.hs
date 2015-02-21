@@ -147,10 +147,14 @@ mkFoldDec ff = foldFoldFamily fold' ff
 	| otherwise		= AppT (ConT nm)
 
     mkBifunct' :: Name -> Type -> Type -> Type
-    mkBifunct' nm lhs rhs = appTs [ConT nm, lhs, rhs]
+    mkBifunct' nm lhs rhs
+	| nm == ''(,)	  = appTs [TupleT 2, lhs, rhs]
+	| otherwise	  = appTs [ConT nm, lhs, rhs]
 
     mkTrifunct' :: Name -> Type -> Type -> Type -> Type
-    mkTrifunct' nm l' m' r' = appTs [ConT nm, l', m', r']
+    mkTrifunct' nm l' m' r'
+	| nm == ''(,,)	 = appTs [TupleT 3, l', m', r']
+	| otherwise	 = appTs [ConT nm, l', m', r']
 
 -- | Creates a declaration for the @idFold@.
 mkIdFoldDecs :: FoldFamily -> [Dec]
