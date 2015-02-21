@@ -22,8 +22,7 @@ import Data.Bitraversable(Bitraversable)
 import qualified Data.Data as D
 import Data.List(intercalate)
 import qualified Data.Map as M
-import Data.Origami.Internal.Fold(Fold(..),
-    errFold, foldFoldFamily, foldDataCase)
+import Data.Origami.Internal.Fold(foldFoldFamily)
 import Data.Origami.Internal.FoldFamily
 import Data.Origami.Internal.Pretty(prettyFold)
 import Data.Origami.Internal.TH(duplicateCtorNames, mkFoldDecs)
@@ -132,6 +131,12 @@ buildFoldFamilyMaybe rts functs atoms = do
 -- | Builds a 'FoldFamily' in any 'MonadBuild' monad.
 buildFoldFamilyMB :: forall m . MonadBuild m
     => [Name] -> [Name] -> [Name] -> m FoldFamily
+
+    -- TODO Note that this code is basically a monadic fold over
+    -- compiler structures: "Language.Haskell.TH.Syntax".  Monadic,
+    -- because we need to call 'reify'.  Could this be rewritten as a
+    -- 'Fold'?
+
 buildFoldFamilyMB rts functs atoms = do
     ((), w) <- getData runDfsM
     case processData w of
@@ -153,23 +158,6 @@ buildFoldFamilyMB rts functs atoms = do
 	    see nm
 	    dcs <- getDataCases nm
 	    putDataTy nm dcs
-	    let newNms' = newNms dcs
-	    mapM_ visitNm newNms'
-
-    -- | Extracts 'Name' from 'DataCase's.
-    newNms :: [DataCase] -> [Name]
-    newNms = concatMap $ foldDataCase fold'
-	where
-	fold' :: Fold [Name] [Name] dataTy foldFamily Name
-	fold' = (errFold "newNms"){
-		    mkDataCase = \ _ dfs -> concat dfs,
-		    mkAtomic = const [],
-		    mkNonatomic = return,
-		    mkFunct = const id,
-		    mkBifunct = const (++),
-		    mkTrifunct = \ _ l' m' r' -> concat [l', m', r'],
-		    mkTy = id
-		}
 
     -- | Gets a list of 'DataCase's from a type's 'Name' using the
     -- compiler's knowledge.
@@ -254,14 +242,14 @@ buildFoldFamilyMB rts functs atoms = do
     -- | Gets a 'DataField' from a 'ConT' 'Type'.
     getDataFieldFromConstructor :: Name -> m DataField
     getDataFieldFromConstructor nm' = if nm' `elem` atoms
-	then return $ Atomic $ Ty ws'
+	then return $ Atomic $ Ty nm'
 	else do
-	    mTy <- getTypeSynDef nm'
-	    case mTy of
-		Just t -> getDataFieldFromType t
-		Nothing -> return $ Nonatomic (Ty ws')
-	where
-	ws' = nm'
+	    mNmTy <- getTypeSynDef nm'
+	    case mNmTy of
+		Just (nm'', t) -> withStackTop nm'' $ getDataFieldFromType t
+		Nothing -> do
+		    visitNm nm'
+		    return $ Nonatomic (Ty nm')
 
     -- | Gets a 'DataField' from a 'Functor' application.
     getDataFieldFromFunctApp :: Name -> Type -> m DataField
@@ -289,16 +277,14 @@ buildFoldFamilyMB rts functs atoms = do
 
     -- | If the 'Name' is of a type synonym, returns the type it
     -- defines, else 'Nothing'
-    getTypeSynDef :: Name -> m (Maybe Type)
+    getTypeSynDef :: Name -> m (Maybe (Name, Type))
     getTypeSynDef nm' = do
 	info <- reifyTypeName nm'
 	case info of
 	    TyConI dec -> case dec of
-		TySynD nm tvbs t -> if null tvbs
-		    then return $ Just t
-		    else withStackTop nm
-			     $ throwErrWithStack
-				 $ ErrParamTypeSyn (pretty dec)
+		TySynD nm tvbs t -> withStackTop nm $ if null tvbs
+		    then return $ Just (nm, t)
+		    else throwErrWithStack $ ErrParamTypeSyn (pretty dec)
 		_ -> return Nothing
 
 	    -- TODO Or should this be an error?
