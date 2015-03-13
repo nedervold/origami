@@ -26,7 +26,7 @@ import Test.HUnit(Assertion, assertFailure)
 -- catastrophically wrong and problems will be immediately noticed.
 -- (This decision may need to be revisited.)
 tests :: Test
-tests = testGroup "BuildTests" [
+tests = testGroup "Data.Origami.Internal.Build" [
     testFailsOnBuildingEmptyFold,
     testFailsOnIdenticallyNamedConstructors,
     testFailsOnParameterizedType,

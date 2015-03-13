@@ -6,4 +6,4 @@ import Test.Framework(Test, testGroup)
 -- import Test.HUnit(assertEqual)
 
 tests :: Test
-tests = testGroup "OrigamiTests" [ Data.Origami.Internal.BuildTests.tests ]
+tests = testGroup "Data.Origami" [ Data.Origami.Internal.BuildTests.tests ]
