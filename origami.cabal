@@ -4,14 +4,14 @@ Author:                 Eric Nedervold<nedervoldsoftware@gmail.com>
 Maintainer:             Eric Nedervold<nedervoldsoftware@gmail.com>
 License:                BSD3
 License-File:           LICENSE
-Copyright:		(c) 2015 Eric Nedervold
+Copyright:              (c) 2015 Eric Nedervold
 Stability:              alpha
 Homepage:               http://github.com/nedervold/origami
 Bug-Reports:            http://github.com/nedervold/origami/issues
 -- Tested-With:            Haskell Platform 2014.2.0.0 for Mac OS X
 Synopsis:               An un-SYB framework for transforming heterogenous
-			data through folds
-Category:		Data
+                        data through folds
+Category:               Data
 Description:
 
     The Origami package consists of a coding pattern for transforming
@@ -42,6 +42,8 @@ Description:
 
 Cabal-Version:          >= 1.10
 Build-Type:             Simple
+Extra-Source-Files:     Makefile
+                      , changelog
 
 Library
   Default-Language:     Haskell2010
@@ -56,9 +58,9 @@ Library
   Other-Modules:        Data.Origami.Internal.Pretty
                       , Data.Origami.Internal.THUtils
   Build-Depends:        base >= 4 && < 5
-                      , bifunctors ==4.2.*
+                      , bifunctors ==4.*
                       , containers ==0.5.*
-                      , lens ==4.7.*
+                      , lens >= 4.7
                       , mtl ==2.1.*
                       , pretty ==1.1.*
                       , template-haskell
@@ -69,7 +71,7 @@ Test-Suite test
   Hs-Source-Dirs:       tests
   Ghc-Options:          -Wall -Werror
   Main-Is:              Test.hs
-  Other-Modules:	Data.OrigamiTests
+  Other-Modules:        Data.OrigamiTests
                       , Data.Origami.Internal.BuildTests
                       , Data.Origami.Internal.TestFiles.Bar
                       , Data.Origami.Internal.TestFiles.Baz
