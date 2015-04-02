@@ -58,9 +58,9 @@ Library
   Other-Modules:        Data.Origami.Internal.Pretty
                       , Data.Origami.Internal.THUtils
   Build-Depends:        base >= 4 && < 5
-                      , bifunctors ==4.*
+                      , bifunctors >=4
                       , containers ==0.5.*
-                      , lens >= 4.7
+                      , lens >= 4
                       , mtl ==2.1.*
                       , pretty ==1.1.*
                       , template-haskell
