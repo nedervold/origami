@@ -1,5 +1,5 @@
 Name:                   origami
-Version:                0.0.3
+Version:                0.0.4
 Author:                 Eric Nedervold<nedervoldsoftware@gmail.com>
 Maintainer:             Eric Nedervold<nedervoldsoftware@gmail.com>
 License:                BSD3
@@ -59,10 +59,10 @@ Library
                       , Data.Origami.Internal.THUtils
   Build-Depends:        base >= 4 && < 5
                       , bifunctors >=4
-                      , containers ==0.5.*
+                      , containers >= 0.5
                       , lens >= 4
-                      , mtl ==2.1.*
-                      , pretty ==1.1.*
+                      , mtl >= 2.1
+                      , pretty >= 1.1
                       , template-haskell
 
 Test-Suite test
@@ -82,9 +82,9 @@ Test-Suite test
                       , Data.Origami.Internal.TestFiles.Qual
   Build-Depends:        base >=4 && < 5
                       , origami
-                      , HUnit ==1.2.*
-                      , test-framework ==0.8.*
-                      , test-framework-hunit ==0.3.*
+                      , HUnit >= 1.2
+                      , test-framework >= 0.8
+                      , test-framework-hunit >= 0.3
 
 Source-Repository head
   Type:                 git
