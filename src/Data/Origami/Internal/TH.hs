@@ -222,7 +222,7 @@ mkErrFoldDecs ff = foldFoldFamily fold' ff
 	errExp = AppE (VarE errNm) (LitE $ StringL $ thMkString ctor)
 
     foldTagNm :: Name
-    foldTagNm = mkName "foldTag"
+    foldTagNm = mkName "foldTag'"
 
     nm :: Name
     nm = mkName "errFold"
