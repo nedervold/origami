@@ -1,5 +1,6 @@
-0.0.4 (2015-04-02):
+0.0.4 (2015-10-23):
     - Removed upper bounds.
+    - Code changes to compile under GHC 7.10's new Template Haskell.
 0.0.3 (2015-04-02):
     - Relaxing upper bounds.
 0.0.2 (2015-02-21):
