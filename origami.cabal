@@ -49,6 +49,7 @@ Library
   Default-Language:     Haskell2010
   HS-Source-Dirs:       src
   GHC-Options:          -Wall
+  Other-Extensions:     CPP
   Exposed-Modules:      Data.Origami
                       , Data.Origami.Internal.Build
                       , Data.Origami.Internal.Fold

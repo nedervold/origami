@@ -1,4 +1,5 @@
 -- | Creation of declarations from a 'FoldFamily'
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Data.Origami.Internal.TH(mkFoldDecs,
     ctorNamesAreUnique,
@@ -296,10 +297,17 @@ mkMonadicFoldDecs ff = foldFoldFamily fold' ff
         tvbs = map (PlainTV . lowerTHName) $ typeNameList ff
 
         ty :: Type
+#if MIN_VERSION_template_haskell(2,10,0)
+        ty = funcT baseFoldTy
+                   (ForallT [PlainTV mNm]
+                            [AppT (ConT ''Monad) (VarT mNm)]
+                            monadicFoldTy)
+#else
         ty = funcT baseFoldTy
                    (ForallT [PlainTV mNm]
                             [ClassP ''Monad [VarT mNm]]
                             monadicFoldTy)
+#endif
 
         baseFoldTy :: Type
         baseFoldTy = foldTy' ff
