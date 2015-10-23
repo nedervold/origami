@@ -50,9 +50,9 @@ ctorNamesAreUnique = areUnique . seqOf ctorNames
 
 duplicates :: (Ord a, Foldable f) => f a -> S.Set a
 duplicates = M.keysSet
-		 . M.filter (> (1 :: Int))
-		 . M.fromListWith (+)
-		 . foldMap (\x -> [(x, 1)])
+                 . M.filter (> (1 :: Int))
+                 . M.fromListWith (+)
+                 . foldMap (\x -> [(x, 1)])
 
 areUnique :: (Ord a, Foldable f) => f a -> Bool
 areUnique = S.null . duplicates
@@ -62,8 +62,8 @@ lowerTHName = mkName . lowerName
     where
     lowerName :: Name -> String
     lowerName nm = toLower c : cs
-	where
-	(c : cs) = nameBase nm
+        where
+        (c : cs) = nameBase nm
 
 upperTHName :: Name -> Name
 upperTHName = mkName . upperName
@@ -100,8 +100,8 @@ ctorNameList = S.toList . setOf ctorNames
 -- 'FoldFamily'.
 mkFoldDecs :: FoldFamily -> [Dec]
 mkFoldDecs ff = mkFoldDec ff : mkIdFoldDecs ff ++ mkErrFoldDecs ff
-					       ++ mkMonadicFoldDecs ff
-					       ++ mkFoldFuncDecs ff
+                                               ++ mkMonadicFoldDecs ff
+                                               ++ mkFoldFuncDecs ff
 
 -- | Creates a declaration for the @Fold@.
 mkFoldDec :: FoldFamily -> Dec
@@ -109,52 +109,52 @@ mkFoldDec ff = foldFoldFamily fold' ff
     where
     fold' :: Fold (Name, [Type]) Type [(Name, VarStrictType)] Dec Name
     fold' = Fold {
-		mkFoldFamily = mkFoldFamily',
-		mkDataTy = mkDataTy',
-		mkDataCase = (,),
-		mkTy = id,
-		mkAtomic = ConT . upperTHName,
-		mkNonatomic = VarT . lowerTHName,
-		mkFunct = mkFunct',
-		mkBifunct = mkBifunct',
-		mkTrifunct = mkTrifunct'
-	    }
+                mkFoldFamily = mkFoldFamily',
+                mkDataTy = mkDataTy',
+                mkDataCase = (,),
+                mkTy = id,
+                mkAtomic = ConT . upperTHName,
+                mkNonatomic = VarT . lowerTHName,
+                mkFunct = mkFunct',
+                mkBifunct = mkBifunct',
+                mkTrifunct = mkTrifunct'
+            }
 
     mkFoldFamily' :: [[(Name, VarStrictType)]] -> Dec
     mkFoldFamily' dts = DataD [] foldName tvbs [con] []
-	where
-	tvbs :: [TyVarBndr]
-	tvbs = map (PlainTV . lowerTHName) $ typeNameList ff
+        where
+        tvbs :: [TyVarBndr]
+        tvbs = map (PlainTV . lowerTHName) $ typeNameList ff
 
-	con :: Con
-	con = RecC foldName vsts
+        con :: Con
+        con = RecC foldName vsts
 
-	vsts :: [VarStrictType]
-	vsts = map snd $ sortBy (comparing fst) $ concat dts
+        vsts :: [VarStrictType]
+        vsts = map snd $ sortBy (comparing fst) $ concat dts
 
     mkDataTy' :: Name -> [(Name, [Type])] -> [(Name, VarStrictType)]
     mkDataTy' ty dcs
-	= [(ctor, (ctorNm, NotStrict, fldTy))
-	       | (ctor, fldTys) <- dcs,
-		 let ctorNm = thMkName ctor,
-		 let fldTy = funcTs (fldTys ++ [resTy])]
-	where
-	resTy = VarT $ lowerTHName ty
+        = [(ctor, (ctorNm, NotStrict, fldTy))
+               | (ctor, fldTys) <- dcs,
+                 let ctorNm = thMkName ctor,
+                 let fldTy = funcTs (fldTys ++ [resTy])]
+        where
+        resTy = VarT $ lowerTHName ty
 
     mkFunct' :: Name -> Type -> Type
     mkFunct' nm
-	| nm == ''[]		= AppT ListT
-	| otherwise		= AppT (ConT nm)
+        | nm == ''[]            = AppT ListT
+        | otherwise             = AppT (ConT nm)
 
     mkBifunct' :: Name -> Type -> Type -> Type
     mkBifunct' nm lhs rhs
-	| nm == ''(,)	  = appTs [TupleT 2, lhs, rhs]
-	| otherwise	  = appTs [ConT nm, lhs, rhs]
+        | nm == ''(,)     = appTs [TupleT 2, lhs, rhs]
+        | otherwise       = appTs [ConT nm, lhs, rhs]
 
     mkTrifunct' :: Name -> Type -> Type -> Type -> Type
     mkTrifunct' nm l' m' r'
-	| nm == ''(,,)	 = appTs [TupleT 3, l', m', r']
-	| otherwise	 = appTs [ConT nm, l', m', r']
+        | nm == ''(,,)   = appTs [TupleT 3, l', m', r']
+        | otherwise      = appTs [ConT nm, l', m', r']
 
 -- | Creates a declaration for the @idFold@.
 mkIdFoldDecs :: FoldFamily -> [Dec]
@@ -162,30 +162,30 @@ mkIdFoldDecs ff = foldFoldFamily fold' ff
     where
     fold' :: Fold Name dataField [Name] [Dec] ty
     fold' = (errFold "mkIdFoldDecs.fold'"){
-		mkFoldFamily = mkFoldFamily',
-		mkDataTy = mkDataTy',
-		mkDataCase = const
-	    }
+                mkFoldFamily = mkFoldFamily',
+                mkDataTy = mkDataTy',
+                mkDataCase = const
+            }
 
     mkFoldFamily' :: [[Name]] -> [Dec]
     mkFoldFamily' dcs = [SigD nm ty, ValD pat bd []]
-	where
-	nm :: Name
-	nm = mkName "idFold"
+        where
+        nm :: Name
+        nm = mkName "idFold"
 
-	ty :: Type
-	ty = appTs $ map ConT $ foldName : map upperTHName (typeNameList ff)
+        ty :: Type
+        ty = appTs $ map ConT $ foldName : map upperTHName (typeNameList ff)
 
-	pat :: Pat
-	pat = VarP nm
+        pat :: Pat
+        pat = VarP nm
 
-	bd :: Body
-	bd = NormalB
-		 $ RecConE foldName
-		       [(thMkName ws, ConE $ upperTHName ws) | ws <- ctors ]
+        bd :: Body
+        bd = NormalB
+                 $ RecConE foldName
+                       [(thMkName ws, ConE $ upperTHName ws) | ws <- ctors ]
 
-	ctors :: [Name]
-	ctors = sort $ concat dcs
+        ctors :: [Name]
+        ctors = sort $ concat dcs
 
     mkDataTy' :: Name -> [Name] -> [Name]
     mkDataTy' _ = id
@@ -201,25 +201,25 @@ mkErrFoldDecs ff = foldFoldFamily fold' ff
     where
     fold' :: Fold (Name, FieldExp) dataField [(Name, FieldExp)] [Dec] ty
     fold' = (errFold "errFoldDecs"){
-		mkFoldFamily = mkFoldFamily',
-		mkDataTy = flip const,
-		mkDataCase = mkDataCase'
-	    }
+                mkFoldFamily = mkFoldFamily',
+                mkDataTy = flip const,
+                mkDataCase = mkDataCase'
+            }
 
     mkFoldFamily' :: [[(Name, FieldExp)]] -> [Dec]
     mkFoldFamily' dts = [SigD nm ty, FunD nm [cl]]
-	where
-	cl :: Clause
-	cl = Clause [VarP foldTagNm] bd [errDef]
+        where
+        cl :: Clause
+        cl = Clause [VarP foldTagNm] bd [errDef]
 
-	bd :: Body
-	bd = mkSortedRecBody foldName dts
+        bd :: Body
+        bd = mkSortedRecBody foldName dts
 
     mkDataCase' :: Name -> [dataField] -> (Name, FieldExp)
     mkDataCase' ctor _ = (ctor, (thMkName ctor, errExp))
-	where
-	errExp :: Exp
-	errExp = AppE (VarE errNm) (LitE $ StringL $ thMkString ctor)
+        where
+        errExp :: Exp
+        errExp = AppE (VarE errNm) (LitE $ StringL $ thMkString ctor)
 
     foldTagNm :: Name
     foldTagNm = mkName "foldTag'"
@@ -229,28 +229,28 @@ mkErrFoldDecs ff = foldFoldFamily fold' ff
 
     ty :: Type
     ty = funcT (ConT ''String) (ForallT tvbs [] $ foldTy' ff)
-	where
-	tvbs :: [TyVarBndr]
-	tvbs = map (PlainTV. lowerTHName) $ typeNameList ff
+        where
+        tvbs :: [TyVarBndr]
+        tvbs = map (PlainTV. lowerTHName) $ typeNameList ff
 
     errNm :: Name
     errNm = mkName "err"
 
     errDef :: Dec
     errDef = FunD errNm [cl']
-	where
-	fieldTagNm :: Name
-	fieldTagNm = mkName "fieldTag"
+        where
+        fieldTagNm :: Name
+        fieldTagNm = mkName "fieldTag"
 
-	cl' :: Clause
-	cl' = Clause [VarP fieldTagNm] bd' []
+        cl' :: Clause
+        cl' = Clause [VarP fieldTagNm] bd' []
 
-	bd' :: Body
-	bd' = NormalB $ AppE (VarE $ mkName "error")
-			     (ParensE $ AppE (VarE $ mkName "concat") $
-					      ListE [VarE foldTagNm,
-						     LitE $ StringL ".",
-						     VarE fieldTagNm])
+        bd' :: Body
+        bd' = NormalB $ AppE (VarE $ mkName "error")
+                             (ParensE $ AppE (VarE $ mkName "concat") $
+                                              ListE [VarE foldTagNm,
+                                                     LitE $ StringL ".",
+                                                     VarE fieldTagNm])
 
 -- | Creates a declaration for the @monadicFold@.
 mkMonadicFoldDecs :: FoldFamily -> [Dec]
@@ -258,16 +258,16 @@ mkMonadicFoldDecs ff = foldFoldFamily fold' ff
     where
     fold' :: Fold (Name, FieldExp) Exp [(Name, FieldExp)] [Dec] ty
     fold' = Fold {
-		mkFoldFamily = mkFoldFamily',
-		mkDataTy = const id,
-		mkDataCase = mkDataCase',
-		mkAtomic = mkAtomic',
-		mkNonatomic = mkNonatomic',
-		mkFunct = mkFunct',
-		mkBifunct = mkBifunct',
-		mkTrifunct = mkTrifunct',
-		mkTy = error "mkMonadicFoldDecs.mkTy"
-	    }
+                mkFoldFamily = mkFoldFamily',
+                mkDataTy = const id,
+                mkDataCase = mkDataCase',
+                mkAtomic = mkAtomic',
+                mkNonatomic = mkNonatomic',
+                mkFunct = mkFunct',
+                mkBifunct = mkBifunct',
+                mkTrifunct = mkTrifunct',
+                mkTy = error "mkMonadicFoldDecs.mkTy"
+            }
 
     nm :: Name
     nm = mkName "monadicFold"
@@ -280,54 +280,54 @@ mkMonadicFoldDecs ff = foldFoldFamily fold' ff
 
     monadicFoldTy :: Type
     monadicFoldTy = appTs (ConT foldName
-			      : map (m . lowerTHName) (typeNameList ff))
+                              : map (m . lowerTHName) (typeNameList ff))
 
     baseFoldName :: Name
     baseFoldName = mkName "baseFold"
 
     mkFoldFamily' :: [[(Name, FieldExp)]] -> [Dec]
     mkFoldFamily' dcs = [SigD nm ty',
-			 FunD nm [cl]]
-	where
-	ty' :: Type
-	ty' = ForallT tvbs [] ty
+                         FunD nm [cl]]
+        where
+        ty' :: Type
+        ty' = ForallT tvbs [] ty
 
-	tvbs :: [TyVarBndr]
-	tvbs = map (PlainTV . lowerTHName) $ typeNameList ff
+        tvbs :: [TyVarBndr]
+        tvbs = map (PlainTV . lowerTHName) $ typeNameList ff
 
-	ty :: Type
-	ty = funcT baseFoldTy
-		   (ForallT [PlainTV mNm]
-			    [ClassP ''Monad [VarT mNm]]
-			    monadicFoldTy)
+        ty :: Type
+        ty = funcT baseFoldTy
+                   (ForallT [PlainTV mNm]
+                            [ClassP ''Monad [VarT mNm]]
+                            monadicFoldTy)
 
-	baseFoldTy :: Type
-	baseFoldTy = foldTy' ff
+        baseFoldTy :: Type
+        baseFoldTy = foldTy' ff
 
-	cl :: Clause
-	cl = Clause [VarP baseFoldName] bd []
+        cl :: Clause
+        cl = Clause [VarP baseFoldName] bd []
 
-	bd :: Body
-	bd = mkSortedRecBody foldName dcs
+        bd :: Body
+        bd = mkSortedRecBody foldName dcs
 
     mkDataCase' :: Name -> [Exp] -> (Name, FieldExp)
     mkDataCase' ctor dfs = (ctor, (thMkName ctor, LamE pats doE))
-	where
-	pats :: [Pat]
-	pats = zipWith const varPs dfs
+        where
+        pats :: [Pat]
+        pats = zipWith const varPs dfs
 
-	doE :: Exp
-	doE = DoE (bindStmts ++ [NoBindS resE])
+        doE :: Exp
+        doE = DoE (bindStmts ++ [NoBindS resE])
 
-	bindStmts :: [Stmt]
-	bindStmts = [BindS p (AppE df e) | (p, df, e) <- zip3 varPs' dfs varEs]
+        bindStmts :: [Stmt]
+        bindStmts = [BindS p (AppE df e) | (p, df, e) <- zip3 varPs' dfs varEs]
 
-	resE :: Exp
-	resE = AppE (VarE 'return)
-		    (appEs $ VarE (thMkName ctor) : VarE baseFoldName : exps')
-	    where
-	    exps' :: [Exp]
-	    exps' = zipWith const varEs' dfs
+        resE :: Exp
+        resE = AppE (VarE 'return)
+                    (appEs $ VarE (thMkName ctor) : VarE baseFoldName : exps')
+            where
+            exps' :: [Exp]
+            exps' = zipWith const varEs' dfs
 
     mkAtomic' :: ty -> Exp
     mkAtomic' _ = VarE 'return
@@ -337,22 +337,22 @@ mkMonadicFoldDecs ff = foldFoldFamily fold' ff
 
     mkFunct' :: Name -> Exp -> Exp
     mkFunct' _ f = ParensE $ comp (VarE 'sequence)
-				  (appEs [VarE 'fmap, f])
+                                  (appEs [VarE 'fmap, f])
 
     mkBifunct' :: Name -> Exp -> Exp -> Exp
     mkBifunct' _ l r = ParensE $ comp (VarE 'bisequence)
-				      (appEs [VarE 'bimap, l, r])
+                                      (appEs [VarE 'bimap, l, r])
 
     mkTrifunct' :: Name -> Exp -> Exp -> Exp -> Exp
     mkTrifunct' _ l' m' r' = ParensE $ comp (VarE 'trisequence)
-					    (appEs [VarE 'trimap, l', m', r'])
+                                            (appEs [VarE 'trimap, l', m', r'])
 
     -- | Composes two 'Exp's.
     comp :: Exp -> Exp -> Exp
     comp lhs rhs = InfixE (Just lhs) composeE (Just rhs)
-	where
-	composeE :: Exp
-	composeE = VarE $ mkName "."
+        where
+        composeE :: Exp
+        composeE = VarE $ mkName "."
 
 -- | Creates a fold function @foldXxx@ for each datatype @Xxx@ in the
 -- 'FoldFamily'.
@@ -361,16 +361,16 @@ mkFoldFuncDecs ff = foldFoldFamily fold' ff
     where
     fold' :: Fold Clause Exp [Dec] [Dec] Name
     fold' = Fold {
-		mkFoldFamily = concat,
-		mkDataTy = mkDataTy',
-		mkDataCase = mkDataCase',
-		mkAtomic = const (VarE 'id),
-		mkNonatomic = mkNonatomic',
-		mkFunct = mkFunct',
-		mkBifunct = mkBifunct',
-		mkTrifunct = mkTrifunct',
-		mkTy = id
-	    }
+                mkFoldFamily = concat,
+                mkDataTy = mkDataTy',
+                mkDataCase = mkDataCase',
+                mkAtomic = const (VarE 'id),
+                mkNonatomic = mkNonatomic',
+                mkFunct = mkFunct',
+                mkBifunct = mkBifunct',
+                mkTrifunct = mkTrifunct',
+                mkTy = id
+            }
 
     fName :: Name
     fName = mkName "f"

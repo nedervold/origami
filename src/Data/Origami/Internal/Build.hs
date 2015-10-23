@@ -38,8 +38,8 @@ buildFoldsDryRun :: [Name] -> [Name] -> [Name] -> Q [Dec]
 buildFoldsDryRun rts functs atoms = do
     ff <- buildFoldFamily rts functs atoms
     runIO $ do
-	print $ foldFoldFamily prettyFold ff
-	print $ ppr $ mkFoldDecs ff
+        print $ foldFoldFamily prettyFold ff
+        print $ ppr $ mkFoldDecs ff
     return []
 
 -- | Discovers the fold family and builds declarations from it to be
@@ -87,7 +87,7 @@ buildFoldsDryRun rts functs atoms = do
 -- Since the discovery process can automatically collect a very large
 -- number of datatypes, and since the user doesn't usually see the
 -- spliced code, we require the user to declare what she expects so
--- that there are no surprises.	 For that reason, any functor classes
+-- that there are no surprises.  For that reason, any functor classes
 -- expected to be appear in the result must be declared, as are
 -- datatypes the user wants to treat as atomic.
 --
@@ -99,10 +99,10 @@ buildFoldsDryRun rts functs atoms = do
 -- that's a bug; please let us know. If the error messages are opaque,
 -- that's a bug too.
 
-buildFolds :: [Name]	-- ^ names of the root datatypes
-	   -> [Name]	-- ^ names of the /n/-ary functor classes to be used
-	   -> [Name]	-- ^ names of datatypes declared to be atomic
-	   -> Q [Dec]
+buildFolds :: [Name]    -- ^ names of the root datatypes
+           -> [Name]    -- ^ names of the /n/-ary functor classes to be used
+           -> [Name]    -- ^ names of datatypes declared to be atomic
+           -> Q [Dec]
 buildFolds rts functs atoms = do
     ff <- buildFoldFamily rts functs atoms
     return $ mkFoldDecs ff
@@ -112,19 +112,19 @@ buildFoldFamily :: [Name] -> [Name] -> [Name] -> Q FoldFamily
 buildFoldFamily rts functs atoms = do
     e <- runBuild $ buildFoldFamilyMB rts functs atoms
     case e of
-	Left err -> fail $ show err
-	Right ff -> return ff
+        Left err -> fail $ show err
+        Right ff -> return ff
 
--- | Builds a 'FoldFamily' or returns an error.	 Spliced result is of
+-- | Builds a 'FoldFamily' or returns an error.  Spliced result is of
 -- type 'Either' 'BuildErr' 'FoldFamily'.
 buildFoldFamilyMaybe :: [Name] -> [Name] -> [Name] -> Q Exp
 buildFoldFamilyMaybe rts functs atoms = do
     e <- recover (return $ Left ErrThrownInQ)
-	     $ runBuild
-		 $ buildFoldFamilyMB rts functs atoms
+             $ runBuild
+                 $ buildFoldFamilyMB rts functs atoms
 
-	-- TODO Extra handling for unique names would go here instead
-	-- of (const Nothing).
+        -- TODO Extra handling for unique names would go here instead
+        -- of (const Nothing).
 
     dataToExpQ (const Nothing) e
 
@@ -140,193 +140,193 @@ buildFoldFamilyMB :: forall m . MonadBuild m
 buildFoldFamilyMB rts functs atoms = do
     ((), w) <- getData runDfsM
     case processData w of
-	Left err -> throwErr err
-	Right ff -> return ff
+        Left err -> throwErr err
+        Right ff -> return ff
 
     where
     -- | Runs a depth-first search.
     runDfsM :: m ()
     runDfsM = do
-	mapM_ see atoms
-	mapM_ visitNm rts
+        mapM_ see atoms
+        mapM_ visitNm rts
 
     -- | Visit a 'Name'.
     visitNm :: Name -> m ()
     visitNm nm = do
-	s <- seen nm
-	unless s $ withStackTop nm $ do
-	    see nm
-	    dcs <- getDataCases nm
-	    putDataTy nm dcs
+        s <- seen nm
+        unless s $ withStackTop nm $ do
+            see nm
+            dcs <- getDataCases nm
+            putDataTy nm dcs
 
     -- | Gets a list of 'DataCase's from a type's 'Name' using the
     -- compiler's knowledge.
     getDataCases :: Name -> m [DataCase]
     getDataCases nm = do
-	info <- reifyTypeName nm
-	case info of
-	    TyConI dec -> getDataCasesFromDec nm dec
-	    _ -> throwErrWithStack $ ErrReify nm info
+        info <- reifyTypeName nm
+        case info of
+            TyConI dec -> getDataCasesFromDec nm dec
+            _ -> throwErrWithStack $ ErrReify nm info
 
     -- | Gets a list of 'DataCase's from a 'Dec'.
     getDataCasesFromDec :: Name -> Dec -> m [DataCase]
     getDataCasesFromDec nm dec = case dec of
-	DataD _ nm' [] cons' _
-	    -> getDataCasesFromDataD nm' cons'
-	DataD {} -> throwErrWithStack $ ErrParamType (pretty dec)
-	NewtypeD _ nm' [] con _
-	    -> getDataCasesFromDataD nm' [con]
-	NewtypeD {} -> throwErrWithStack $ ErrParamType (pretty dec)
-	TySynD nm' [] ty
-	    -> withStackTop nm' $ case unAppTs ty of
-		  [ConT _nm] -> throwErrWithStack $ ErrUnimpl $ concat [
-		      "getDataCasesFromDec ", pretty nm, " ", pretty dec]
-		  _ -> throwErrWithStack $ ErrParamType (pretty dec)
-	TySynD nm' _ _
-	    -> withStackTop nm'
-		   $ throwErrWithStack
-		       $ ErrParamTypeSyn (pretty dec)
-	_ -> throwErrWithStack $ ErrReify' nm (pretty dec)
+        DataD _ nm' [] cons' _
+            -> getDataCasesFromDataD nm' cons'
+        DataD {} -> throwErrWithStack $ ErrParamType (pretty dec)
+        NewtypeD _ nm' [] con _
+            -> getDataCasesFromDataD nm' [con]
+        NewtypeD {} -> throwErrWithStack $ ErrParamType (pretty dec)
+        TySynD nm' [] ty
+            -> withStackTop nm' $ case unAppTs ty of
+                  [ConT _nm] -> throwErrWithStack $ ErrUnimpl $ concat [
+                      "getDataCasesFromDec ", pretty nm, " ", pretty dec]
+                  _ -> throwErrWithStack $ ErrParamType (pretty dec)
+        TySynD nm' _ _
+            -> withStackTop nm'
+                   $ throwErrWithStack
+                       $ ErrParamTypeSyn (pretty dec)
+        _ -> throwErrWithStack $ ErrReify' nm (pretty dec)
 
     -- | Gets a list of 'DataCase's from a 'DataD' (or equivalently, a
     -- 'NewtypeD').
     getDataCasesFromDataD :: Name -> [Con] -> m [DataCase]
     getDataCasesFromDataD nm' cons' = if null cons'
-	    then throwErrWithStack $ ErrEmptyData nm'
-	    else mapM getDataCasesFromCon cons'
+            then throwErrWithStack $ ErrEmptyData nm'
+            else mapM getDataCasesFromCon cons'
 
     -- | Gets a 'DataCase' from a 'Con'.
     getDataCasesFromCon :: Con -> m DataCase
     getDataCasesFromCon con = case con of
-	NormalC nm' sts -> do
-	    dfs <- mapM (getDataFieldFromType . snd) sts
-	    return $ DataCase nm' dfs
-	RecC nm' vsts -> do
-	    dfs <- mapM (getDataFieldFromType . thd3) vsts
-	    return $ DataCase nm' dfs
-	InfixC _ nm' _ -> throwErrWithStack $ ErrInfixCtor nm'
-	ForallC {} -> throwErrWithStack
-			  $ ErrUnsupported
-				"Universally quanitified constructors"
+        NormalC nm' sts -> do
+            dfs <- mapM (getDataFieldFromType . snd) sts
+            return $ DataCase nm' dfs
+        RecC nm' vsts -> do
+            dfs <- mapM (getDataFieldFromType . thd3) vsts
+            return $ DataCase nm' dfs
+        InfixC _ nm' _ -> throwErrWithStack $ ErrInfixCtor nm'
+        ForallC {} -> throwErrWithStack
+                          $ ErrUnsupported
+                                "Universally quanitified constructors"
 
-	where
-	thd3 :: (a, b, c) -> c
-	thd3 (_, _,c) = c
+        where
+        thd3 :: (a, b, c) -> c
+        thd3 (_, _,c) = c
 
     -- | Gets a 'DataField' from a 'Type'.
     getDataFieldFromType :: Type -> m DataField
     getDataFieldFromType t = case unAppTs t of
-	[ConT nm'] -> getDataFieldFromConstructor nm'
-	[ConT nm', t1] -> getDataFieldFromFunctApp nm' t1
-	[ListT, t1] -> getDataFieldFromFunctApp ''[] t1
-	[ConT nm', t1, t2] -> getDataFieldFromBifunctApp nm' t1 t2
-	[TupleT 2, t1, t2] -> getDataFieldFromBifunctApp ''(,) t1 t2
-	[ConT nm', t1, t2, t3] -> getDataFieldFromTrifunctApp nm' t1 t2 t3
-	[TupleT 3, t1, t2, t3] -> getDataFieldFromTrifunctApp ''(,,) t1 t2 t3
-	(ConT nm' : _) -> do
-	    info <- reifyTypeName nm'
-	    case info of
-		TyConI dec -> case dec of
-		    DataD {} -> throwErrWithStack $ ErrParamType (pretty dec)
-		    NewtypeD {}
-			-> throwErrWithStack $ ErrParamType (pretty dec)
-		    TySynD nm _ _
-			-> withStackTop nm
-			       $ throwErrWithStack
-				   $ ErrParamTypeSyn (pretty dec)
-		    _ -> throwErrWithStack $ ErrReify' nm' (pretty dec)
-		_ -> throwErrWithStack $ ErrReify nm' info
-	_ -> throwErrWithStack
-		 $ ErrUnimpl ("getDataFieldFromType " ++ pretty t)
+        [ConT nm'] -> getDataFieldFromConstructor nm'
+        [ConT nm', t1] -> getDataFieldFromFunctApp nm' t1
+        [ListT, t1] -> getDataFieldFromFunctApp ''[] t1
+        [ConT nm', t1, t2] -> getDataFieldFromBifunctApp nm' t1 t2
+        [TupleT 2, t1, t2] -> getDataFieldFromBifunctApp ''(,) t1 t2
+        [ConT nm', t1, t2, t3] -> getDataFieldFromTrifunctApp nm' t1 t2 t3
+        [TupleT 3, t1, t2, t3] -> getDataFieldFromTrifunctApp ''(,,) t1 t2 t3
+        (ConT nm' : _) -> do
+            info <- reifyTypeName nm'
+            case info of
+                TyConI dec -> case dec of
+                    DataD {} -> throwErrWithStack $ ErrParamType (pretty dec)
+                    NewtypeD {}
+                        -> throwErrWithStack $ ErrParamType (pretty dec)
+                    TySynD nm _ _
+                        -> withStackTop nm
+                               $ throwErrWithStack
+                                   $ ErrParamTypeSyn (pretty dec)
+                    _ -> throwErrWithStack $ ErrReify' nm' (pretty dec)
+                _ -> throwErrWithStack $ ErrReify nm' info
+        _ -> throwErrWithStack
+                 $ ErrUnimpl ("getDataFieldFromType " ++ pretty t)
 
     -- | Gets a 'DataField' from a 'ConT' 'Type'.
     getDataFieldFromConstructor :: Name -> m DataField
     getDataFieldFromConstructor nm' = if nm' `elem` atoms
-	then return $ Atomic $ Ty nm'
-	else do
-	    mNmTy <- getTypeSynDef nm'
-	    case mNmTy of
-		Just (nm'', t) -> withStackTop nm'' $ getDataFieldFromType t
-		Nothing -> do
-		    visitNm nm'
-		    return $ Nonatomic (Ty nm')
+        then return $ Atomic $ Ty nm'
+        else do
+            mNmTy <- getTypeSynDef nm'
+            case mNmTy of
+                Just (nm'', t) -> withStackTop nm'' $ getDataFieldFromType t
+                Nothing -> do
+                    visitNm nm'
+                    return $ Nonatomic (Ty nm')
 
     -- | Gets a 'DataField' from a 'Functor' application.
     getDataFieldFromFunctApp :: Name -> Type -> m DataField
     getDataFieldFromFunctApp nm' t = do
-	assertInFunct nm'
-	assertClassMembership nm' ''Traversable
-	liftM (Funct nm') (getDataFieldFromType t)
+        assertInFunct nm'
+        assertClassMembership nm' ''Traversable
+        liftM (Funct nm') (getDataFieldFromType t)
 
     -- | Gets a 'DataField' from a 'Bifunctor' application.
     getDataFieldFromBifunctApp :: Name -> Type -> Type -> m DataField
     getDataFieldFromBifunctApp nm' t1 t2 = do
-	assertInFunct nm'
-	assertClassMembership nm' ''Bitraversable
-	liftM2 (Bifunct nm') (getDataFieldFromType t1)
-			     (getDataFieldFromType t2)
+        assertInFunct nm'
+        assertClassMembership nm' ''Bitraversable
+        liftM2 (Bifunct nm') (getDataFieldFromType t1)
+                             (getDataFieldFromType t2)
 
     -- | Gets a 'DataField' from a 'Trifunctor' application.
     getDataFieldFromTrifunctApp :: Name -> Type -> Type -> Type -> m DataField
     getDataFieldFromTrifunctApp nm' t1 t2 t3 = do
-	assertInFunct nm'
-	assertClassMembership nm' ''Tritraversable
-	liftM3 (Trifunct nm') (getDataFieldFromType t1)
-			      (getDataFieldFromType t2)
-			      (getDataFieldFromType t3)
+        assertInFunct nm'
+        assertClassMembership nm' ''Tritraversable
+        liftM3 (Trifunct nm') (getDataFieldFromType t1)
+                              (getDataFieldFromType t2)
+                              (getDataFieldFromType t3)
 
     -- | If the 'Name' is of a type synonym, returns the type it
     -- defines, else 'Nothing'
     getTypeSynDef :: Name -> m (Maybe (Name, Type))
     getTypeSynDef nm' = do
-	info <- reifyTypeName nm'
-	case info of
-	    TyConI dec -> case dec of
-		TySynD nm tvbs t -> withStackTop nm $ if null tvbs
-		    then return $ Just (nm, t)
-		    else throwErrWithStack $ ErrParamTypeSyn (pretty dec)
-		_ -> return Nothing
+        info <- reifyTypeName nm'
+        case info of
+            TyConI dec -> case dec of
+                TySynD nm tvbs t -> withStackTop nm $ if null tvbs
+                    then return $ Just (nm, t)
+                    else throwErrWithStack $ ErrParamTypeSyn (pretty dec)
+                _ -> return Nothing
 
-	    -- TODO Or should this be an error?
-	    _ -> return Nothing
+            -- TODO Or should this be an error?
+            _ -> return Nothing
 
     -- | Assert that the 'Name' is declared as a functor.
     assertInFunct :: Name -> m ()
     assertInFunct nm' = unless (nm' `elem` functs)
-	$ throwErrWithStack $ ErrNoFunct nm'
+        $ throwErrWithStack $ ErrNoFunct nm'
 
     -- | Assert that the 'Name' is declared as a member of the class.
     assertClassMembership :: Name -> Name -> m ()
     assertClassMembership nm' clsNm
-	| (nm', clsNm) == (''[], ''Traversable)		= return ()
-	| (nm', clsNm) == (''(,), ''Bitraversable)	= return ()
-	| (nm', clsNm) == (''(,,), ''Tritraversable)	= return ()
-	| otherwise					= do
-	    info <- reifyTypeName clsNm
-	    case info of
-		ClassI _dec instances -> do
-		    noInst <- anyM (matchingInst info) instances
-		    unless noInst $ throwErrWithStack $ ErrNoInstance clsNm nm'
-		_ -> throwErrWithStack $ ErrNoClass clsNm
+        | (nm', clsNm) == (''[], ''Traversable)         = return ()
+        | (nm', clsNm) == (''(,), ''Bitraversable)      = return ()
+        | (nm', clsNm) == (''(,,), ''Tritraversable)    = return ()
+        | otherwise                                     = do
+            info <- reifyTypeName clsNm
+            case info of
+                ClassI _dec instances -> do
+                    noInst <- anyM (matchingInst info) instances
+                    unless noInst $ throwErrWithStack $ ErrNoInstance clsNm nm'
+                _ -> throwErrWithStack $ ErrNoClass clsNm
 
-	where
-	matchingInst :: Info -> InstanceDec -> m Bool
-	matchingInst info dec = case dec of
-	    InstanceD _ (AppT _ (ConT nm'')) _ -> return $ nm' == nm''
-	    DataInstD _ nm'' [] _ _ -> return $ nm' == nm''
-	    NewtypeInstD {} -> throwErrWithStack
-				   $ ErrReifyUnimpl nm' "NewtypeInstD" info
-	    TySynInstD {} -> throwErrWithStack
-				 $ ErrReifyUnimpl nm' "TySynInstD" info
-	    _ -> return False
+        where
+        matchingInst :: Info -> InstanceDec -> m Bool
+        matchingInst info dec = case dec of
+            InstanceD _ (AppT _ (ConT nm'')) _ -> return $ nm' == nm''
+            DataInstD _ nm'' [] _ _ -> return $ nm' == nm''
+            NewtypeInstD {} -> throwErrWithStack
+                                   $ ErrReifyUnimpl nm' "NewtypeInstD" info
+            TySynInstD {} -> throwErrWithStack
+                                 $ ErrReifyUnimpl nm' "TySynInstD" info
+            _ -> return False
 
-	anyM :: (a -> m Bool) -> [a] -> m Bool
-	anyM _ [] = return False
-	anyM p (a : as) = do
-	    b <- p a
-	    if b
-		then return True
-		else anyM p as
+        anyM :: (a -> m Bool) -> [a] -> m Bool
+        anyM _ [] = return False
+        anyM p (a : as) = do
+            b <- p a
+            if b
+                then return True
+                else anyM p as
 
 ----------------
 -- BuildErr
@@ -359,8 +359,8 @@ Kind incompatibility when matching types:
       ‘Language.Haskell.TH.Syntax.NameU 1761625784’
     In the first argument of ‘PlainTV’, namely
       ‘Language.Haskell.TH.Syntax.Name
-	 (Language.Haskell.TH.Syntax.OccName "a")
-	 (Language.Haskell.TH.Syntax.NameU 1761625784)’
+         (Language.Haskell.TH.Syntax.OccName "a")
+         (Language.Haskell.TH.Syntax.NameU 1761625784)’
 
 This comes up when we have 'Dec's in 'BuildErr's that have parameters.
 When we splice the 'BuildErr' with 'buildFoldFamilyMaybe', the 'Dec'
@@ -392,64 +392,64 @@ data BuildErr = ErrDupCtors (S.Set String)
 
 instance Show BuildErr where
     show (ErrDupCtors ctors) = concat [
-	"Different types use the same constructor name(s): ",
-	intercalate ", " (map show $ S.toList ctors),
-	"."]
+        "Different types use the same constructor name(s): ",
+        intercalate ", " (map show $ S.toList ctors),
+        "."]
     show (ErrEmptyData nm stk)
-	= showStk stk (pretty nm ++ " has no constructors.")
+        = showStk stk (pretty nm ++ " has no constructors.")
     show ErrEmptyFold
-	= "No constructors are used. The resulting fold would be empty."
+        = "No constructors are used. The resulting fold would be empty."
     show (ErrInfixCtor nm stk)
-	= showStk stk
-	      $ concat ["Infix constructors like (", pretty nm, ") are not yet supported."]
+        = showStk stk
+              $ concat ["Infix constructors like (", pretty nm, ") are not yet supported."]
     show (ErrMonadFail msg) = msg
     show (ErrNoClass nm stk)
-	= showStk stk
-	      $ concat ["Class ", pretty nm, " is not visible at the splice."]
+        = showStk stk
+              $ concat ["Class ", pretty nm, " is not visible at the splice."]
     show (ErrNoCtor nm stk)
-	= showStk stk
-	      $ concat ["Constructor ",
-			pretty nm,
-			" is not visible at the splice."]
+        = showStk stk
+              $ concat ["Constructor ",
+                        pretty nm,
+                        " is not visible at the splice."]
     show (ErrNoFunct nm stk)
-	= showStk stk $ concat ["Type ",
-				pretty nm,
-				" is used in functor position but",
-				" is not declared in the splice."]
+        = showStk stk $ concat ["Type ",
+                                pretty nm,
+                                " is used in functor position but",
+                                " is not declared in the splice."]
     show (ErrNoInstance cls nm stk)
-	= showStk stk $ concat ["There is no instance of ",
-				pretty cls,
-				" ",
-				pretty nm,
-				" visible at the splice."]
+        = showStk stk $ concat ["There is no instance of ",
+                                pretty cls,
+                                " ",
+                                pretty nm,
+                                " visible at the splice."]
     show (ErrParamType decDoc stk)
-	= showStk stk $ concat [decDoc,
-				" has parameters, ",
-				"which is not yet supported."]
+        = showStk stk $ concat [decDoc,
+                                " has parameters, ",
+                                "which is not yet supported."]
     show (ErrParamTypeSyn decDoc stk)
-	= showStk stk $ concat [decDoc,
-				" has parameters, ",
-				"which is not yet supported."]
+        = showStk stk $ concat [decDoc,
+                                " has parameters, ",
+                                "which is not yet supported."]
     show (ErrReify nm info stk)
-	= showStk stk $ concat ["reify ",
-				pretty nm,
-				"returned non-type Info: ",
-				pretty info,
-				"."]
+        = showStk stk $ concat ["reify ",
+                                pretty nm,
+                                "returned non-type Info: ",
+                                pretty info,
+                                "."]
     show (ErrReify' nm decDoc stk)
-	= showStk stk $ concat ["reify ",
-				pretty nm,
-				"returned Info with bad declaration: ",
-				decDoc,
-				"."]
+        = showStk stk $ concat ["reify ",
+                                pretty nm,
+                                "returned Info with bad declaration: ",
+                                decDoc,
+                                "."]
     show (ErrReifyUnimpl nm tag info stk)
-	= showStk stk $ concat ["Not handling Decs of type ",
-				tag,
-				" while looking for instances for ",
-				pretty nm,
-				" in ",
-				pretty info,
-				"."]
+        = showStk stk $ concat ["Not handling Decs of type ",
+                                tag,
+                                " while looking for instances for ",
+                                pretty nm,
+                                " in ",
+                                pretty info,
+                                "."]
     show ErrThrownInQ = "Unknown error thrown in Q monad."
     show (ErrUnimpl msg stk) = showStk stk (msg ++ " unimplemented.")
     show (ErrUnsupported msg stk) = showStk stk (msg ++ " not yet supported.")
@@ -457,9 +457,9 @@ instance Show BuildErr where
 -- | Prepends the stack trace
 showStk :: Stack -> String -> String
 showStk stk msg = concat ["Error while processing ",
-			  intercalate " <= " $ map (show . pretty) stk,
-			  ":\n",
-			  msg]
+                          intercalate " <= " $ map (show . pretty) stk,
+                          ":\n",
+                          msg]
 
 ----------------
 -- Data
@@ -474,11 +474,11 @@ processData data' = do
     when (null data') $ Left ErrEmptyFold
 
     let ff = FoldFamily [DataTy ws dcs
-			     | (ws, dcs) <- M.toList $ M.fromList data']
+                             | (ws, dcs) <- M.toList $ M.fromList data']
 
     let dupCtors = duplicateCtorNames ff
 
-	-- TODO A better error would tell you both the types and the
+        -- TODO A better error would tell you both the types and the
         -- ctors.
 
     unless (S.null dupCtors) $ Left $ ErrDupCtors dupCtors

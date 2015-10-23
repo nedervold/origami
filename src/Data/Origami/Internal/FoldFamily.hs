@@ -45,13 +45,13 @@ data DataCase = DataCase Name [DataField]
 -- | Represents a component of a datatype; that is, an argument to one
 -- of its constructors.
 data DataField = Atomic Ty -- ^ a type to be taken verbatim, not to be folded
-	   | Nonatomic Ty  -- ^ a type to be recursively folded
-	   | Funct Name DataField
-		 -- ^ an application of a 'Functor'
-	   | Bifunct Name DataField DataField
-		 -- ^ an application of a 'Bifunctor'
-	   | Trifunct Name DataField DataField DataField
-		 -- ^ an application of a 'Trifunctor'
+           | Nonatomic Ty  -- ^ a type to be recursively folded
+           | Funct Name DataField
+                 -- ^ an application of a 'Functor'
+           | Bifunct Name DataField DataField
+                 -- ^ an application of a 'Bifunctor'
+           | Trifunct Name DataField DataField DataField
+                 -- ^ an application of a 'Trifunctor'
     deriving (Eq, Ord, Show, Data, Typeable)
 
 -- | Represents a datatype's name.
@@ -85,42 +85,42 @@ instance HasName DataTy where
 -- | Access to the 'DataCase's of a datatype
 dataCases :: Lens' DataTy [DataCase]
 dataCases = lens (\ (DataTy _ dcs) -> dcs)
-		 (\ (DataTy nm _) dcs -> DataTy nm dcs)
+                 (\ (DataTy nm _) dcs -> DataTy nm dcs)
 
 instance HasName DataCase where
     name = lens (\ (DataCase nm _) -> nm)
-		(\ (DataCase _ dfs) nm -> DataCase nm dfs)
+                (\ (DataCase _ dfs) nm -> DataCase nm dfs)
 
 -- | Access to the 'DataFields's of a 'DataCase'
 dataFields :: Lens' DataCase [DataField]
 dataFields = lens (\ (DataCase _ dfs) -> dfs)
-		  (\ (DataCase nm _) dfs -> DataCase nm dfs)
+                  (\ (DataCase nm _) dfs -> DataCase nm dfs)
 
 -- | Provides a 'Traversal' for an atomic 'Ty' in a 'DataField'
 _Atomic :: Prism' DataField Ty
 _Atomic = prism Atomic (\ df -> case df of
-				    Atomic ty -> Right ty
-				    _ -> Left df)
+                                    Atomic ty -> Right ty
+                                    _ -> Left df)
 
 -- | Provides a 'Traversal' for an nonatomic 'Ty' in a 'DataField'
 _Nonatomic :: Prism' DataField Ty
 _Nonatomic = prism Nonatomic (\ df -> case df of
-					  Nonatomic ty -> Right ty
-					  _ -> Left df)
+                                          Nonatomic ty -> Right ty
+                                          _ -> Left df)
 
 -- | Provides a 'Traversal' for a 'Functor' application in a 'DataField'
 _Funct :: Prism' DataField (Name, DataField)
 _Funct = prism (uncurry Funct)
-	       ( \ df -> case df of
-			     Funct nm df' -> Right (nm, df')
-			     _ -> Left df)
+               ( \ df -> case df of
+                             Funct nm df' -> Right (nm, df')
+                             _ -> Left df)
 
 -- | Provides a 'Traversal' for a 'Bifunctor' application in a 'DataField'
 _Bifunct :: Prism' DataField (Name, DataField, DataField)
 _Bifunct = prism (\ (nm, df, df') -> Bifunct nm df df')
-		 (\ df -> case df of
-			      Bifunct nm df' df'' -> Right (nm, df', df'')
-			      _ -> Left df)
+                 (\ df -> case df of
+                              Bifunct nm df' df'' -> Right (nm, df', df'')
+                              _ -> Left df)
 
 -- | Provides a 'Traversal' for a 'Trifunctor' application in a 'DataField'
 _Trifunct :: Prism' DataField (Name, DataField, DataField, DataField)

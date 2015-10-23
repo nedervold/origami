@@ -39,40 +39,40 @@ tests = testGroup "Data.Origami.Internal.Build" [
 testFailsOnParameterizedType :: Test
 testFailsOnParameterizedType
     = testCase msg
-	  $ assertBuildFailed $(buildFoldFamilyMaybe [''PT] []
-						     [''String])
+          $ assertBuildFailed $(buildFoldFamilyMaybe [''PT] []
+                                                     [''String])
     where
     msg = "testFailsOnParameterizedType"
 
 testFailsOnParameterizedTypeSynonym :: Test
 testFailsOnParameterizedTypeSynonym
     = testCase msg
-	  $ assertBuildFailed $(buildFoldFamilyMaybe [''PTS] []
-						     [''String])
+          $ assertBuildFailed $(buildFoldFamilyMaybe [''PTS] []
+                                                     [''String])
     where
     msg = "testFailsOnParameterizedTypeSynonym"
 
 testFailsOnEmptyData :: Test
 testFailsOnEmptyData
     = testCase msg
-	  $ assertBuildFailed $(buildFoldFamilyMaybe [''Empty ] [] [])
+          $ assertBuildFailed $(buildFoldFamilyMaybe [''Empty ] [] [])
     where
     msg = "testFailsOnEmptyData"
 
 testFailsOnInfixConstructor :: Test
 testFailsOnInfixConstructor
     = testCase msg
-	  $ assertBuildFailed $(buildFoldFamilyMaybe [''Infix ] [] [])
+          $ assertBuildFailed $(buildFoldFamilyMaybe [''Infix ] [] [])
     where
     msg = "testFailsOnInfixConstructor"
 
 testFailsOnQualifiedType :: Test
 testFailsOnQualifiedType
     = testCase msg
-	  $ assertBuildFailed
-		$(buildFoldFamilyMaybe
-		      [''Data.Origami.Internal.TestFiles.Qual.Qual ]
-		      [] [])
+          $ assertBuildFailed
+                $(buildFoldFamilyMaybe
+                      [''Data.Origami.Internal.TestFiles.Qual.Qual ]
+                      [] [])
     where
     msg = "testFailsOnQualifiedType"
 
@@ -86,8 +86,8 @@ testFailsOnIdenticallyNamedConstructors
 testFailsOnBuildingEmptyFold :: Test
 testFailsOnBuildingEmptyFold
     = testCase msg
-	  $ assertBuildFailed
-		$(buildFoldFamilyMaybe [''Int] [] [''Int])
+          $ assertBuildFailed
+                $(buildFoldFamilyMaybe [''Int] [] [''Int])
     where
     msg = "testFailsOnBuildingEmptyFold"
 
