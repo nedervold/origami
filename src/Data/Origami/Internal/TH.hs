@@ -59,12 +59,27 @@ areUnique :: (Ord a, Foldable f) => f a -> Bool
 areUnique = S.null . duplicates
 
 lowerTHName :: Name -> Name
-lowerTHName = mkName . lowerName
+lowerTHName = mkName . dodgeNameClash . lowerName
     where
     lowerName :: Name -> String
     lowerName nm = toLower c : cs
         where
         (c : cs) = nameBase nm
+
+dodgeNameClash :: String -> String
+dodgeNameClash str = if str `elem` keywords
+                         then str'
+                         else str
+    where
+    str' = str ++ "'"
+
+    -- | Alphanumeric keywords in Haskell
+    keywords :: [String]
+    keywords = ["as", "case", "class", "data", "default", "deriving",
+                "do", "else", "family", "forall", "foreign hiding",
+                "if", "import", "in", "infix", "infixl", "infixr",
+                "instance", "let", "mdo", "module newtype", "of",
+                "proc", "qualified", "rec", "then", "type", "where"]
 
 upperTHName :: Name -> Name
 upperTHName = mkName . upperName

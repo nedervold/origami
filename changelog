@@ -1,3 +1,5 @@
+0.0.6 (2015-10-23):
+    - More code changes to compile under GHC 7.10's new Template Haskell.
 0.0.5 (2015-10-23):
     - Code changes to compile under GHC 7.10's new Template Haskell.
 0.0.4 (2015-04-02):
